@@ -37,7 +37,7 @@ class UrbanRoutesPage:
     from_field = (By.ID, 'from')
     to_field = (By.ID, 'to')
     taxi_button = (By.CLASS_NAME, 'button.round')
-    comford_button = (By.CLASS_NAME, 'tcard.active')
+    comford_button = (By.XPATH, "//img[@alt='Comfort']")
     phone_button = (By.CLASS_NAME, 'np-button')
     phone_field = (By.NAME, 'phone')
     phone_button_form = (By.CLASS_NAME, 'button.full')
@@ -51,8 +51,25 @@ class UrbanRoutesPage:
     input_card = (By.CLASS_NAME,'card-input')
     input_card_code = (By.XPATH, "//input[@id='code']")
     button_add_card = (By.XPATH, "//button[text()='Agregar']")
-    close_frame_form = (By.CLASS_NAME, "close-button.section-close")
+    close_frame_form = (By.CSS_SELECTOR, "button.close-button.section-close")
 
+
+    manta_panuelos_toggle = (By.XPATH, "//div[text()='Manta y pañuelos']/following::input[@type='checkbox'][1]")
+
+    icecream_activate_options = (By.CLASS_NAME,"reqs")
+    icecream_value = ( By.XPATH,
+        "//div[@class='r-group'][.//div[normalize-space()='Cubeta de helado']]//div[contains(@class,'counter-value')][1]"
+    )
+
+    icecream_plus_button = (
+        By.XPATH,
+        "//div[@class='r-counter-label' and normalize-space()='Helado']/ancestor::div[contains(@class,'r-counter-container')]//div[contains(@class,'counter-plus')]"
+    )
+
+    close_button = (
+        By.CSS_SELECTOR,
+        ".payment-picker .section.active button.section-close"
+    )
 
     #Driver elements
     driver_msg_field = (By.ID,'comment')
@@ -76,10 +93,17 @@ class UrbanRoutesPage:
     def get_phone_number(self):
         return self.driver.find_element(*self.phone_final_text).text
 
+    def get_driver_msg_field(self):
+        return self.driver.find_element(*self.driver_msg_field).text
+
+    def get_icecrem_value(self):
+        return self.driver.find_element(*self.icecream_value).text
+
     def click_pedir_taxi(self):
         self.driver.find_element(*self.taxi_button).click()
 
     def click_comford_button(self):
+        WebDriverWait(self.driver, 5000)
         self.driver.find_element(*self.comford_button).click()
 
     def set_route(self, from_address, to_address):
@@ -107,15 +131,29 @@ class UrbanRoutesPage:
 
         self.driver.find_element(*self.add_card).click()
 
+        self.driver.find_element(*self.input_card).send_keys(data.card_number+Keys.TAB+data.card_code+Keys.TAB)
+        WebDriverWait(self.driver, 500)
 
+        self.driver.find_element(*self.button_add_card).click()
+        WebDriverWait(self.driver, 500)
 
-        self.driver.find_element(*self.input_card).send_keys(data.card_number)
-        WebDriverWait(self.driver, 1000)
+        self.driver.find_element(self.close_button).click()
+        return True
 
-        self.driver.find_element(*self.input_card).send_keys(Keys.TAB)
+    def write_driver_message(self):
+        self.driver.find_element(*self.driver_msg_field).send_keys("Hola")
 
-        self.driver.find_element(*self.input_card_code).send_keys(data.card_code)
+    def ask_manta_panuelos(self):
+        self.driver.find_element(*self.manta_panuelos_toggle).click()
+
+    def ask_icecream(self):
+        self.driver.find_element(*self.icecream_activate_options).click()
+
         WebDriverWait(self.driver, 9000)
+
+        self.driver.find_element(*self.icecream_plus_button).click()
+        WebDriverWait(self.driver, 1000)
+        self.driver.find_element(*self.icecream_plus_button).click()
 
 
 
@@ -144,19 +182,21 @@ class TestUrbanRoutes:
         routes_page.click_pedir_taxi()
         routes_page.click_comford_button()
 
-        #phone field
+        #test phone process
         routes_page.set_phone_number(data.phone_number)
-
-
         assert routes_page.get_phone_number() == data.phone_number
 
-        routes_page.payment_method()
-        #assert routes_page.get_phone_number() == data.phone_number
+        #test payment process
+        complete = routes_page.payment_method()
+        assert complete
 
+        #test text driver message
+        routes_page.write_driver_message()
+        assert routes_page.get_driver_msg_field() is not None
 
-    #def test_taxi_button(self):
-    #    self.driver.get(data.urban_routes_url)
-    #    routes_page = UrbanRoutesPage(self.driver)
+        #test ice cream
+        routes_page.ask_icecream()
+        assert  routes_page.get_icecrem_value() == '2'
 
 
 
