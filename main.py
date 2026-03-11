@@ -74,6 +74,9 @@ class UrbanRoutesPage:
     #Driver elements
     driver_msg_field = (By.ID,'comment')
 
+    wait_driver_button = (By.CLASS_NAME,'smart-button' )
+    wait_driver_modal = (By.CSS_SELECTOR, ".order-header-title")
+
 
     def __init__(self, driver):
         self.driver = driver
@@ -137,7 +140,7 @@ class UrbanRoutesPage:
         self.driver.find_element(*self.button_add_card).click()
         WebDriverWait(self.driver, 500)
 
-        self.driver.find_element(self.close_button).click()
+        self.driver.find_element(*self.close_button).click()
         return True
 
     def write_driver_message(self):
@@ -156,6 +159,17 @@ class UrbanRoutesPage:
         self.driver.find_element(*self.icecream_plus_button).click()
 
 
+    def wait_driver(self):
+        self.driver.find_element(*self.wait_driver_button).click()
+
+        wait = WebDriverWait(self.driver, 80)
+
+        show_modal = wait.until(
+            lambda d: (
+                          el := self.driver.find_element(*self.wait_driver_modal)
+                      ) and el.text.lower().startswith("el conductor") and el
+            )
+        return show_modal
 
 class TestUrbanRoutes:
 
@@ -198,6 +212,9 @@ class TestUrbanRoutes:
         routes_page.ask_icecream()
         assert  routes_page.get_icecrem_value() == '2'
 
+
+        #wait driver
+        assert routes_page.wait_driver() is not None
 
 
     @classmethod
