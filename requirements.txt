@@ -1,0 +1,5 @@
+# Dependencias principales del proyecto
+selenium>=4.43.0
+
+# Herramientas de desarrollo
+pytest==9.0.3

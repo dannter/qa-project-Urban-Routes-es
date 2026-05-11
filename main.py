@@ -41,7 +41,8 @@ class TestUrbanRoutes:
     def test_comford_button(self):
         page = self.get_page()
         page.click_pedir_taxi()
-        assert page.click_comford_button() is not None
+        page.click_comford_button()
+        assert page.get_comford_button_displayed()
 
 
     #Tarea 3
@@ -55,33 +56,35 @@ class TestUrbanRoutes:
     def test_set_credit_card(self):
         #test payment process
         page = self.get_page()
-        complete = page.payment_method()
-        assert complete
+        page.payment_method()
+        assert page.get_payment_type() == data.payment_type 
 
     #Tarea 5
     def test_write_driver_msg(self):
         #test text driver message
         page = self.get_page()
-        page.write_driver_message()
-        assert page.get_driver_msg_field() is not None
+        page.write_driver_message(data.message_for_driver)
+        assert page.get_driver_msg_field() == data.message_for_driver
 
     #Tarea 6 
     def test_ask_panuelo_manta(self):
         page = self.get_page()
-        assert page.ask_manta_panuelos() 
+        page.ask_manta_panuelos() 
+        assert page.get_panuelos_selected()
 
     #Tarea 7
     def test_ask_ice_cream(self):
         #test ice cream
         page = self.get_page()
         page.ask_icecream()
-        assert  page.get_icecrem_value() == '2'
+        assert  page.get_icecrem_value() == data.ice_cream_quantity
 
     #Tarea 8
     def test_find_taxi(self):
         #find driver
         page = self.get_page()
         assert page.click_find_taxi()
+        
     
     #Tarea 9
     def test_wait_driver(self):

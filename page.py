@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from helpers import Helpers
+from selenium.webdriver.support import expected_conditions as EC
 
 
 class UrbanRoutesPage:
@@ -26,7 +27,7 @@ class UrbanRoutesPage:
     input_card_code = (By.XPATH, "//input[@id='code']")
     button_add_card = (By.XPATH, "//button[text()='Agregar']")
     close_frame_form = (By.CSS_SELECTOR, "button.close-button.section-close")
-
+    payment_type = (By.CLASS_NAME, 'pp-value-text')
 
 
     manta_panuelos_toggle = (By.XPATH, '(//span[@class="slider round"])[1]')
@@ -72,74 +73,105 @@ class UrbanRoutesPage:
         return self.driver.find_element(*self.phone_final_text).text
 
     def get_driver_msg_field(self):
-        return self.driver.find_element(*self.driver_msg_field).text
+        return self.driver.find_element(*self.driver_msg_field).get_attribute("value")
 
     def get_icecrem_value(self):
         return self.driver.find_element(*self.icecream_value).text
+    
+    def get_comford_button_displayed(self):
+        return self.driver.find_element(*self.comford_button).is_displayed()
+    
+    def get_panuelos_selected(self):
+        toggle_input = self.driver.find_element(By.XPATH, '(//input[@class="switch-input"])[1]')
+        return  toggle_input.is_selected()
+    
+    def get_payment_type(self):
+        payment_modal = (
+            By.XPATH,
+            "//div[contains(@class,'modal')]"
+            "[.//div[contains(@class,'head') and normalize-space()='Método de pago']]"
+        )
+
+        WebDriverWait(self.driver, 10).until(
+            EC.invisibility_of_element_located(payment_modal)
+        )
+
+        return self.driver.find_element(*self.payment_type).text
+        
 
     def click_pedir_taxi(self):
         self.driver.find_element(*self.taxi_button).click()
 
     def click_comford_button(self):
-        WebDriverWait(self.driver, 5000)
+        WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable(self.comford_button)
+        )
+
         self.driver.find_element(*self.comford_button).click()
-        return True
 
     def set_route(self, from_address, to_address):
         self.driver.find_element(*self.from_field).send_keys(from_address)
         self.driver.find_element(*self.to_field).send_keys(to_address)
 
     def set_phone_number(self, number):
-        WebDriverWait(self.driver, 15)
+        WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable(self.phone_button)
+        )
 
         self.driver.find_element(*self.phone_button).click()
         self.driver.find_element(*self.phone_field).send_keys(number)
+        WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable(self.phone_button_form)
+        )
+
         self.driver.find_element(*self.phone_button_form).click()
-        WebDriverWait(self.driver, 100)
         
         confirm_code = Helpers.retrieve_phone_code(self.driver)
-        WebDriverWait(self.driver, 60)
-
+        
         self.driver.find_element(*self.code_field).send_keys( confirm_code)
         self.driver.find_element(*self.button_code_confirm).click()
-
-        WebDriverWait(self.driver, 100)
+      
 
     def payment_method(self ):
         self.driver.find_element(*self.payment_button).click()
-        WebDriverWait(self.driver, 500)
-
+      
         self.driver.find_element(*self.add_card).click()
 
         self.driver.find_element(*self.input_card).send_keys(data.card_number+Keys.TAB+data.card_code+Keys.TAB)
-        WebDriverWait(self.driver, 500)
-
+       
         self.driver.find_element(*self.button_add_card).click()
-        WebDriverWait(self.driver, 500)
-
+       
         self.driver.find_element(*self.close_button).click()
-        return True
+        
 
-    def write_driver_message(self):
-        self.driver.find_element(*self.driver_msg_field).send_keys("Hola")
+    def write_driver_message(self, msg):
+        field = self.driver.find_element(*self.driver_msg_field)
+
+        field.clear()
+        field.send_keys(msg)
+
+        WebDriverWait(self.driver, 10).until(
+            lambda d: field.get_attribute("value") == msg
+        )
 
     def ask_manta_panuelos(self):
         self.driver.find_element(*self.manta_panuelos_toggle).click()
-        WebDriverWait(self.driver, 9000)
-        return True
         
     def ask_icecream(self):
         self.driver.find_element(*self.icecream_activate_options).click()
-        WebDriverWait(self.driver, 4000)
-
-        self.driver.find_element(*self.icecream_plus_button).click()
-        WebDriverWait(self.driver, 1000)
-        self.driver.find_element(*self.icecream_plus_button).click()
+    
+        for _ in range(int(data.ice_cream_quantity)):
+            self.driver.find_element(*self.icecream_plus_button).click()
+       
+        #self.driver.find_element(*self.icecream_plus_button).click()
 
     def click_find_taxi(self):
         self.driver.find_element(*self.wait_driver_button).click()
-        WebDriverWait(self.driver, 4000)
-        return True
+        modal = WebDriverWait(self.driver, 10).until(
+            EC.visibility_of_element_located(self.wait_driver_modal)
+            
+        )
+        return modal.is_displayed()
 
     def wait_driver(self):
         wait = WebDriverWait(self.driver, 80)
